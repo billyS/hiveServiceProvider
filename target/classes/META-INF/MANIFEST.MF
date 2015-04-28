@@ -1,5 +1,5 @@
 Manifest-Version: 1.0
-Bnd-LastModified: 1427284380772
+Bnd-LastModified: 1429467064062
 Build-Jdk: 1.8.0_25
 Built-By: williamsneddon
 Bundle-Activator: uk.co.billy.hive.doorlockservice.impl.Activator

@@ -2,7 +2,6 @@ package uk.co.billy.hive.doorlockservice.impl;
 
 import uk.co.billy.hive.doorlockservice.api.DoorLockServiceAPI;
 
-
 import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
@@ -19,6 +18,8 @@ public class DoorLockServiceImpl implements DoorLockServiceAPI{
 			public String   internalIP      = "192.168.1.7";	// Mac test server 
 			private String doorState          = "";
 			private ObjectOutputStream out ;
+			Socket clientSocket=null;	
+			ServerClient client = null;
 			
 		public static void main(String[] args) {}
 		public DoorLockServiceImpl() {}
@@ -32,50 +33,13 @@ public class DoorLockServiceImpl implements DoorLockServiceAPI{
 		}
 
 		/* (non-Javadoc)
-		 * @see uk.co.hive.doorlockservice.api.DoorLockServiceAPI#run()
-		 */
-		public void run() {
-			while(!stopnow) {
-				Socket clientSocket=null;
-				try {
-					
-					clientSocket = new Socket(internalIP, testServicePort);
-					
-					ObjectInputStream in =  new ObjectInputStream(clientSocket.getInputStream());
-					out = new ObjectOutputStream(clientSocket.getOutputStream());
-					
-					//XXX may need BufferdReader for Arduino. above only for testing !!
-					//BufferedReader inFromServer = new BufferedReader(new InputStreamReader(clientSocket.getInputStream()));
-			        //String message = (String) inFromServer.readLine();
-			        String message = (String) in.readObject();
-
-					System.out.println("Current Door Lock State Sent from Server: " + message);
-					if(message == "") break;
-					if(message != "") setDoorState(message);
-
-				}catch(IOException | ClassNotFoundException ex) {
-					ex.printStackTrace();
-				}finally {
-					try {
-						if (clientSocket != null) {
-							clientSocket.close();
-							clientSocket = null;
-						}
-					}catch (Exception ex) {
-						ex.printStackTrace();
-					}
-				}
-			}	
-
-		}
-
-		/* (non-Javadoc)
 		 * @see uk.co.hive.doorlockservice.api.DoorLockServiceAPI#sendCommand(java.lang.String)
 		 */
 		public void sendCommand(String command) {
+			out = client.getTheOut();
 			 try {
 		        	if(out != null){
-		            	out.writeObject(command);
+		        		out.writeObject(command);
 		            }
 				}catch(Exception e) {
 					e.printStackTrace();
@@ -94,8 +58,21 @@ public class DoorLockServiceImpl implements DoorLockServiceAPI{
 		 */
 		public void startService() {
 			stopnow = false;
-			new Thread(this).start();
+			//new Thread(this).start();
+			makeContactWithServer();   
 		}
+		
+		public void makeContactWithServer(  ) {
+		    Socket tcpS;
+		    try {
+		        tcpS = new Socket("192.168.1.7", 50004);
+		        client = new ServerClient(tcpS);
+		        client.start();
+		    }
+		    catch ( Exception err ) {
+		      
+		    }
+		  }
 
 		/* (non-Javadoc)
 		 * @see uk.co.hive.doorlockservice.api.DoorLockServiceAPI#stopServiceAsync()
@@ -103,5 +80,75 @@ public class DoorLockServiceImpl implements DoorLockServiceAPI{
 		public void stopServiceAsync() {
 			// assume stop service successful
 					stopnow = true;
+					try {
+						if (clientSocket != null) {
+							clientSocket.close();
+							clientSocket = null;
+						}
+					}catch (Exception ex) {
+						ex.printStackTrace();
+					}
 		}
+		
+		
+		
+		class ServerClient extends Thread {
+		    private Socket          theSocket;            		// Socket used
+		    private ObjectInputStream theIn  = null;        	// Input stream
+		    private ObjectOutputStream theOut = null;        	// Output stream
+
+
+		    /**
+		     * Constructor
+		     * @param model - model of the game
+		     * @param s - Socket used to communicate with server
+		     */
+		    public ServerClient( Socket s ) {
+		  	  
+		      theSocket       = s;                     // Remember socket
+		      try {
+		      	theOut = new ObjectOutputStream(theSocket.getOutputStream());
+		  		theIn = new ObjectInputStream(theSocket.getInputStream());
+		  		
+		  	} catch (IOException e) {
+		  		// TODO Auto-generated catch block
+		  		e.printStackTrace();
+		  	}
+		    }
+
+		    
+		    public void run()                             // Execution
+		    {
+		      // Listen to network to get the latest state from the server
+		      try
+		      {
+		        while ( true )                           // Loop
+		        {
+		          String mes = (String) theIn.readObject();
+		          if ( mes == null ) break;              // No more data 
+		        }
+
+		        theIn.close();                            // Close Read
+		        theOut.close();                           // Close Write
+
+		        theSocket.close();                        // Close Socket
+		      }
+		      catch ( Exception err )
+		      {
+		        err.printStackTrace();
+		       
+		      }
+
+		    }
+		    
+		    private ObjectOutputStream getTheOut(){
+		    	return theOut;
+		    }
+		  }
+
+		
+		
+		
+		
+		
 }
