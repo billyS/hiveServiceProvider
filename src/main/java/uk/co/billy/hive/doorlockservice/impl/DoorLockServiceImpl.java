@@ -15,13 +15,14 @@ public class DoorLockServiceImpl implements DoorLockServiceAPI{
 			//public String publicUniIP  	  = "89.243.62.195";
 			//public String publicHomeIP      = "88.107.65.111";
 			//public String   internalIP      = "192.168.1.6";	// Raspberry Pi
-			public String   internalIP      = "192.168.1.7";	// Mac test server 
+			public String   internalIP        = "192.168.1.7";	// Mac test server 
 			private String doorState          = "";
 			private ObjectOutputStream out ;
 			Socket clientSocket=null;	
 			ServerClient client = null;
 			
-		public static void main(String[] args) {}
+		public static void main(String[] args) {} 
+		
 		public DoorLockServiceImpl() {}
 			
 		/* (non-Javadoc)
